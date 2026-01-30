@@ -16,11 +16,14 @@ A Model Context Protocol (MCP) server for SiYuan Note, providing complete SiYuan
 
 #### Using npx (Recommended)
 ```bash
-# Run directly
+# Run directly (local SiYuan)
 npx -y siyuan-mcp@latest
 
-# Set environment variables
+# Set environment variables for local access
 SIYUAN_HOST=127.0.0.1 SIYUAN_PORT=6806 SIYUAN_TOKEN=your-token npx -y siyuan-mcp@latest
+
+# For remote SiYuan behind HTTPS reverse proxy
+SIYUAN_URL=https://siyuan.example.com SIYUAN_TOKEN=your-token npx -y siyuan-mcp@latest
 ```
 
 #### Using Docker
@@ -80,6 +83,23 @@ docker run -d \
 }
 ```
 
+##### Remote Access via HTTPS (Reverse Proxy)
+If your SiYuan instance is behind a reverse proxy (e.g., Traefik, nginx) with HTTPS:
+```json
+{
+  "mcpServers": {
+    "siyuan-mcp": {
+      "command": "npx",
+      "args": ["-y", "siyuan-mcp@latest"],
+      "env": {
+        "SIYUAN_URL": "https://siyuan.example.com",
+        "SIYUAN_TOKEN": "your-api-token-here"
+      }
+    }
+  }
+}
+```
+
 ##### Docker Configuration
 If you use Docker to run the service, you can configure the client to connect to the Docker container:
 
@@ -115,9 +135,12 @@ If you use Docker to run the service, you can configure the client to connect to
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
+| `SIYUAN_URL` | Full URL for SiYuan (e.g., `https://siyuan.example.com`). If set, overrides HOST/PORT. | - | No |
 | `SIYUAN_HOST` | SiYuan server address | 127.0.0.1 | No |
 | `SIYUAN_PORT` | SiYuan server port | 6806 | No |
 | `SIYUAN_TOKEN` | API token | - | Yes |
+
+**Note**: Use `SIYUAN_URL` when connecting to a SiYuan instance behind an HTTPS reverse proxy. When `SIYUAN_URL` is set, `SIYUAN_HOST` and `SIYUAN_PORT` are ignored.
 
 ### 📋 Common Issues
 
@@ -137,6 +160,12 @@ If you use Docker to run the service, you can configure the client to connect to
 
 #### Q: Why use `-y` parameter with npx?
 **A:** The `-y` parameter automatically confirms package installation without prompting for user input, which is essential for MCP client configurations where interactive prompts would cause connection failures.
+
+#### Q: How to connect to SiYuan behind a reverse proxy with HTTPS?
+**A:** Use the `SIYUAN_URL` environment variable instead of `SIYUAN_HOST` and `SIYUAN_PORT`:
+```bash
+SIYUAN_URL=https://siyuan.example.com SIYUAN_TOKEN=your-token npx -y siyuan-mcp@latest
+```
 
 ### 🎯 Features
 
@@ -473,11 +502,14 @@ MIT License
 
 #### 使用 npx（推荐）
 ```bash
-# 直接运行
+# 直接运行（本地思源）
 npx -y siyuan-mcp@latest
 
-# 设置环境变量
+# 设置环境变量（本地访问）
 SIYUAN_HOST=127.0.0.1 SIYUAN_PORT=6806 SIYUAN_TOKEN=your-token npx -y siyuan-mcp@latest
+
+# 远程访问（HTTPS 反向代理后的思源）
+SIYUAN_URL=https://siyuan.example.com SIYUAN_TOKEN=your-token npx -y siyuan-mcp@latest
 ```
 
 #### 使用 Docker
@@ -537,6 +569,23 @@ docker run -d \
 }
 ```
 
+##### 通过 HTTPS 远程访问（反向代理）
+如果你的思源实例在反向代理（如 Traefik、nginx）后面使用 HTTPS：
+```json
+{
+  "mcpServers": {
+    "siyuan-mcp": {
+      "command": "npx",
+      "args": ["-y", "siyuan-mcp@latest"],
+      "env": {
+        "SIYUAN_URL": "https://siyuan.example.com",
+        "SIYUAN_TOKEN": "your-api-token-here"
+      }
+    }
+  }
+}
+```
+
 ##### Docker 配置
 如果你使用 Docker 运行服务，可以配置客户端连接到 Docker 容器：
 
@@ -572,9 +621,12 @@ docker run -d \
 
 | 变量名 | 说明 | 默认值 | 必需 |
 |--------|------|--------|------|
+| `SIYUAN_URL` | 思源完整 URL（如 `https://siyuan.example.com`）。设置后会覆盖 HOST/PORT | - | 否 |
 | `SIYUAN_HOST` | 思源笔记服务器地址 | 127.0.0.1 | 否 |
 | `SIYUAN_PORT` | 思源笔记服务器端口 | 6806 | 否 |
 | `SIYUAN_TOKEN` | API 令牌 | - | 是 |
+
+**注意**：当连接到 HTTPS 反向代理后的思源实例时，请使用 `SIYUAN_URL`。设置 `SIYUAN_URL` 后，`SIYUAN_HOST` 和 `SIYUAN_PORT` 将被忽略。
 
 ### 📋 常见问题
 
@@ -595,7 +647,11 @@ docker run -d \
 #### Q: 为什么使用 `-y` 参数？
 **A:** `-y` 参数可以自动确认包安装，无需用户交互确认，这对于 MCP 客户端配置非常重要，因为交互式提示会导致连接失败。
 
-
+#### Q: 如何连接到 HTTPS 反向代理后的思源？
+**A:** 使用 `SIYUAN_URL` 环境变量代替 `SIYUAN_HOST` 和 `SIYUAN_PORT`：
+```bash
+SIYUAN_URL=https://siyuan.example.com SIYUAN_TOKEN=your-token npx -y siyuan-mcp@latest
+```
 
 ### 🎯 功能特性
 
@@ -787,8 +843,6 @@ docker run -d \
 }
 ```
 
-
-
 ### 📚 开发资源
 
 #### 相关链接
@@ -915,8 +969,6 @@ cp env.example .env
 # 启动服务
 docker-compose up -d
 ```
-
-
 
 ### 📄 许可证
 
