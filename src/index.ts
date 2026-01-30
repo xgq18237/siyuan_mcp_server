@@ -12,7 +12,10 @@ import {
 const SY_HOST = process.env.SIYUAN_HOST || "127.0.0.1";
 const SY_PORT = process.env.SIYUAN_PORT || "6806";
 const SY_TOKEN = process.env.SIYUAN_TOKEN || "";   // 如果没有令牌就留空
-const base = `http://${SY_HOST}:${SY_PORT}`;
+const SY_URL = process.env.SIYUAN_URL;  // Full URL override (e.g., https://siyuan.example.com)
+
+// Use SIYUAN_URL if provided, otherwise construct from host/port
+const base = SY_URL || `http://${SY_HOST}:${SY_PORT}`;
 
 const headers: Record<string, string> = { "Content-Type": "application/json" };
 if (SY_TOKEN) headers["Authorization"] = `token ${SY_TOKEN}`;
@@ -1159,13 +1162,15 @@ ${status.errors.length > 0 ? status.errors.map(e => `- ${e}`).join('\n') : ''}
             host: SY_HOST,
             port: SY_PORT,
             baseUrl: base,
-            hasToken: !!SY_TOKEN
+            hasToken: !!SY_TOKEN,
+            usingCustomUrl: !!SY_URL
           },
           workspace: {
             path: "未设置",
             description: "工作空间路径已移除，使用相对路径"
           },
           environment: {
+            SIYUAN_URL: SY_URL || "未设置",
             SIYUAN_HOST: SY_HOST,
             SIYUAN_PORT: SY_PORT,
             SIYUAN_TOKEN: SY_TOKEN ? "已设置" : "未设置",
@@ -1181,6 +1186,7 @@ ${status.errors.length > 0 ? status.errors.map(e => `- ${e}`).join('\n') : ''}
 - 端口: ${info.connection.port}
 - 基础URL: ${info.connection.baseUrl}
 - 令牌状态: ${info.connection.hasToken ? '已设置' : '未设置'}
+- 使用自定义URL: ${info.connection.usingCustomUrl ? '是' : '否'}
 
 📁 工作空间:
 - 路径: ${info.workspace.path}
@@ -1190,10 +1196,9 @@ ${status.errors.length > 0 ? status.errors.map(e => `- ${e}`).join('\n') : ''}
 ${Object.entries(info.environment).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
 💡 建议:
-1. 如果访问远程思源笔记，请设置 SIYUAN_HOST
+1. 如果访问远程思源笔记，请设置 SIYUAN_URL (推荐) 或 SIYUAN_HOST
 2. 如果使用非默认端口，请设置 SIYUAN_PORT
-3. 建议设置 SIYUAN_WORKSPACE 以支持绝对路径操作
-4. 确保 SIYUAN_TOKEN 已正确设置
+3. 确保 SIYUAN_TOKEN 已正确设置
 
 详细配置: ${JSON.stringify(info, null, 2)}
         `;
