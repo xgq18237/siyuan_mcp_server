@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build output
-dist/
+# dist/ - NOT ignored, committed for npx github: usage
 build/
 
 # Environment variables
