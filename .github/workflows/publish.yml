@@ -51,7 +51,7 @@ jobs:
           context: .
           push: true
           tags: |
-            xgq18237/siyuan-mcp:latest
-            xgq18237/siyuan-mcp:${{ github.ref_name }}
+            zhizhiqq/siyuan-mcp:latest
+            zhizhiqq/siyuan-mcp:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
