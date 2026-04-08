@@ -20,25 +20,38 @@ const base = SY_URL || `http://${SY_HOST}:${SY_PORT}`;
 const headers: Record<string, string> = { "Content-Type": "application/json" };
 if (SY_TOKEN) headers["Authorization"] = `token ${SY_TOKEN}`;
 
+/**
+ * MCP stdio 传输要求 stdout 仅输出 JSON-RPC。任何调试日志必须走 stderr，且默认关闭，
+ * 否则 Cursor 会把 "Calling API..." 等当作 JSON 解析，报 Unexpected token 并断开连接。
+ */
+const SIYUAN_MCP_DEBUG =
+  process.env.SIYUAN_MCP_DEBUG === "1" || process.env.SIYUAN_MCP_DEBUG === "true";
+
+function debugApi(...args: unknown[]) {
+  if (SIYUAN_MCP_DEBUG) {
+    console.error("[siyuan-mcp]", ...args);
+  }
+}
+
 async function api(path: string, body?: any) {
   try {
-    console.log(`Calling API: ${base}${path}`);
+    debugApi(`Calling API: ${base}${path}`);
   const res = await fetch(base + path, {
       method: "POST", // 所有请求都使用 POST 方法
     headers,
       body: JSON.stringify(body || {}), // 总是发送 body，即使是空对象
     });
     
-    console.log(`Response status: ${res.status}`);
-    console.log(`Response headers:`, Object.fromEntries(res.headers.entries()));
+    debugApi(`Response status: ${res.status}`);
+    debugApi(`Response headers:`, Object.fromEntries(res.headers.entries()));
     
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
     
     const text = await res.text();
-    console.log(`Response text length: ${text.length}`);
-    console.log(`Response text: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
+    debugApi(`Response text length: ${text.length}`);
+    debugApi(`Response text: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
     
     if (!text) {
       throw new Error(`Empty response from server. This usually means:
