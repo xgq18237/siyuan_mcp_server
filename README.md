@@ -292,7 +292,7 @@ Manage resource files in SiYuan Note, support batch upload.
 - **Reference System**: Support block references and transfers, maintain data relationships
 
 #### 🎯 Developer Friendly
-- **Detailed Logging**: Provide detailed API call logs for easy debugging
+- **Optional HTTP debug**: Set `SIYUAN_MCP_DEBUG=1` to log each SiYuan API call to **stderr** (never stdout—stdio MCP requires stdout to be JSON-RPC only)
 - **Status Checking**: Built-in connection status checking for quick problem diagnosis
 - **Rich Examples**: Provide complete usage examples and best practices
 
