@@ -592,6 +592,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     
+    // 网络
+    {
+      name: "network_forward_proxy",
+      description: "正向代理请求外部 URL，对应思源 /api/network/forwardProxy",
+      inputSchema: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "转发的 URL" },
+          method: { type: "string", description: "HTTP 方法，默认为 GET" },
+          timeout: { type: "number", description: "超时时间，单位毫秒，默认为 7000" },
+          contentType: { type: "string", description: "HTTP Content-Type，默认为 application/json" },
+          headers: { type: "array", items: { type: "object" }, description: "HTTP 请求头数组，例如 [{ Cookie: \"\" }]" },
+          payload: { description: "HTTP 请求体，对象或字符串" },
+          payloadEncoding: { type: "string", description: "请求体编码，默认为 text" },
+          responseEncoding: { type: "string", description: "响应体编码，默认为 text" },
+        },
+        required: ["url"],
+      },
+    },
+    
     // 系统信息
 
     {
@@ -1090,6 +1110,22 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         if (args.timeout) params.timeout = args.timeout;
         
         const result = await api("/api/notification/pushErrMsg", params);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      }
+      
+      // 网络
+      case "network_forward_proxy": {
+        if (!args) throw new Error("Arguments are required for network_forward_proxy tool");
+        const params: any = { url: args.url };
+        if (args.method) params.method = args.method;
+        if (args.timeout) params.timeout = args.timeout;
+        if (args.contentType) params.contentType = args.contentType;
+        if (args.headers) params.headers = args.headers;
+        if (args.payload !== undefined) params.payload = args.payload;
+        if (args.payloadEncoding) params.payloadEncoding = args.payloadEncoding;
+        if (args.responseEncoding) params.responseEncoding = args.responseEncoding;
+
+        const result = await api("/api/network/forwardProxy", params);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
       
