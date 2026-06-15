@@ -18,7 +18,7 @@ const SY_URL = process.env.SIYUAN_URL;  // Full URL override (e.g., https://siyu
 const base = SY_URL || `http://${SY_HOST}:${SY_PORT}`;
 
 const headers: Record<string, string> = { "Content-Type": "application/json" };
-if (SY_TOKEN) headers["Authorization"] = `token ${SY_TOKEN}`;
+if (SY_TOKEN) headers["Authorization"] = `Token ${SY_TOKEN}`;
 
 /**
  * MCP stdio 传输要求 stdout 仅输出 JSON-RPC。任何调试日志必须走 stderr，且默认关闭，
@@ -57,7 +57,7 @@ async function api(path: string, body?: any) {
       throw new Error(`Empty response from server. This usually means:
 1. SiYuan API service is not enabled in settings
 2. The API endpoint ${path} does not exist
-3. Authentication is required but token is invalid`);
+3. Authentication is required but  is invalid`);
     }
     
     return JSON.parse(text);
@@ -1175,7 +1175,7 @@ ${status.errors.length > 0 ? status.errors.map(e => `- ${e}`).join('\n') : ''}
             host: SY_HOST,
             port: SY_PORT,
             baseUrl: base,
-            hasToken: !!SY_TOKEN,
+            has: !!SY_,
             usingCustomUrl: !!SY_URL
           },
           workspace: {
@@ -1186,7 +1186,7 @@ ${status.errors.length > 0 ? status.errors.map(e => `- ${e}`).join('\n') : ''}
             SIYUAN_URL: SY_URL || "未设置",
             SIYUAN_HOST: SY_HOST,
             SIYUAN_PORT: SY_PORT,
-            SIYUAN_TOKEN: SY_TOKEN ? "已设置" : "未设置",
+            SIYUAN_: SY_ ? "已设置" : "未设置",
             SIYUAN_WORKSPACE: "已移除"
           }
         };
@@ -1198,7 +1198,7 @@ ${status.errors.length > 0 ? status.errors.map(e => `- ${e}`).join('\n') : ''}
 - 主机: ${info.connection.host}
 - 端口: ${info.connection.port}
 - 基础URL: ${info.connection.baseUrl}
-- 令牌状态: ${info.connection.hasToken ? '已设置' : '未设置'}
+- 令牌状态: ${info.connection.has ? '已设置' : '未设置'}
 - 使用自定义URL: ${info.connection.usingCustomUrl ? '是' : '否'}
 
 📁 工作空间:
@@ -1211,7 +1211,7 @@ ${Object.entries(info.environment).map(([key, value]) => `- ${key}: ${value}`).j
 💡 建议:
 1. 如果访问远程思源笔记，请设置 SIYUAN_URL (推荐) 或 SIYUAN_HOST
 2. 如果使用非默认端口，请设置 SIYUAN_PORT
-3. 确保 SIYUAN_TOKEN 已正确设置
+3. 确保 SIYUAN_ 已正确设置
 
 详细配置: ${JSON.stringify(info, null, 2)}
         `;
