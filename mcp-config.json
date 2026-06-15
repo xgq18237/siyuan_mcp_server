@@ -4,13 +4,13 @@
       "transportType": "sse",
       "url": "http://localhost:8040/cursor/sse"
     },
-    "siyuan-mcp": {
+    "siyuan-mcp-local": {
       "command": "node",
       "args": ["./dist/index.js"],
       "env": {
         "SIYUAN_HOST": "127.0.0.1",
         "SIYUAN_PORT": "6806",
-        "SIYUAN_TOKEN": "rzo6qq33y19plf7r"
+        "SIYUAN_TOKEN": "d8je19dqmoybv6n2"
       }
     }
   }

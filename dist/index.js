@@ -11,22 +11,32 @@ const base = SY_URL || `http://${SY_HOST}:${SY_PORT}`;
 const headers = { "Content-Type": "application/json" };
 if (SY_TOKEN)
     headers["Authorization"] = `token ${SY_TOKEN}`;
+/**
+ * MCP stdio 传输要求 stdout 仅输出 JSON-RPC。任何调试日志必须走 stderr，且默认关闭，
+ * 否则 Cursor 会把 "Calling API..." 等当作 JSON 解析，报 Unexpected token 并断开连接。
+ */
+const SIYUAN_MCP_DEBUG = process.env.SIYUAN_MCP_DEBUG === "1" || process.env.SIYUAN_MCP_DEBUG === "true";
+function debugApi(...args) {
+    if (SIYUAN_MCP_DEBUG) {
+        console.error("[siyuan-mcp]", ...args);
+    }
+}
 async function api(path, body) {
     try {
-        console.log(`Calling API: ${base}${path}`);
+        debugApi(`Calling API: ${base}${path}`);
         const res = await fetch(base + path, {
             method: "POST", // 所有请求都使用 POST 方法
             headers,
             body: JSON.stringify(body || {}), // 总是发送 body，即使是空对象
         });
-        console.log(`Response status: ${res.status}`);
-        console.log(`Response headers:`, Object.fromEntries(res.headers.entries()));
+        debugApi(`Response status: ${res.status}`);
+        debugApi(`Response headers:`, Object.fromEntries(res.headers.entries()));
         if (!res.ok) {
             throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
         const text = await res.text();
-        console.log(`Response text length: ${text.length}`);
-        console.log(`Response text: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
+        debugApi(`Response text length: ${text.length}`);
+        debugApi(`Response text: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
         if (!text) {
             throw new Error(`Empty response from server. This usually means:
 1. SiYuan API service is not enabled in settings
@@ -552,6 +562,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
                 required: ["msg"],
             },
         },
+        // 网络
+        {
+            name: "network_forward_proxy",
+            description: "正向代理请求外部 URL，对应思源 /api/network/forwardProxy",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    url: { type: "string", description: "转发的 URL" },
+                    method: { type: "string", description: "HTTP 方法，默认为 GET" },
+                    timeout: { type: "number", description: "超时时间，单位毫秒，默认为 7000" },
+                    contentType: { type: "string", description: "HTTP Content-Type，默认为 application/json" },
+                    headers: { type: "array", items: { type: "object" }, description: "HTTP 请求头数组，例如 [{ Cookie: \"\" }]" },
+                    payload: { description: "HTTP 请求体，对象或字符串" },
+                    payloadEncoding: { type: "string", description: "请求体编码，默认为 text" },
+                    responseEncoding: { type: "string", description: "响应体编码，默认为 text" },
+                },
+                required: ["url"],
+            },
+        },
         // 系统信息
         {
             name: "get_version",
@@ -1058,6 +1087,28 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
                 if (args.timeout)
                     params.timeout = args.timeout;
                 const result = await api("/api/notification/pushErrMsg", params);
+                return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+            }
+            // 网络
+            case "network_forward_proxy": {
+                if (!args)
+                    throw new Error("Arguments are required for network_forward_proxy tool");
+                const params = { url: args.url };
+                if (args.method)
+                    params.method = args.method;
+                if (args.timeout)
+                    params.timeout = args.timeout;
+                if (args.contentType)
+                    params.contentType = args.contentType;
+                if (args.headers)
+                    params.headers = args.headers;
+                if (args.payload !== undefined)
+                    params.payload = args.payload;
+                if (args.payloadEncoding)
+                    params.payloadEncoding = args.payloadEncoding;
+                if (args.responseEncoding)
+                    params.responseEncoding = args.responseEncoding;
+                const result = await api("/api/network/forwardProxy", params);
                 return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
             }
             // 系统信息
