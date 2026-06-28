@@ -42,6 +42,32 @@ flowchart LR
 
 ## 🚀 快速开始
 
+### 🤖 让智能体自动配置
+
+只需复制下面的提示词，并填写 MCP 客户端和思源 Token。默认连接本机 `127.0.0.1:6806`；使用其他地址时再修改 HOST 和 PORT。
+
+```text
+请帮我配置最新版 siyuan-mcp。
+
+用户配置：
+- MCP 客户端：{{填写 Codex、Claude Desktop、Cursor 等}}
+- 思源 API Token：{{填写 Token}}
+- SIYUAN_HOST：127.0.0.1
+- SIYUAN_PORT：6806
+
+请直接执行：
+1. 检查 Node.js 是否已安装且版本不低于 18；如果不满足，只告诉我需要安装或升级 Node.js。
+2. 自动找到当前 MCP 客户端的配置文件，保留已有配置，加入名为 siyuan_note 的 MCP：
+   command: npx
+   args: ["-y", "siyuan-mcp@latest"]
+   env: SIYUAN_HOST、SIYUAN_PORT、SIYUAN_TOKEN
+3. 不要覆盖其他 MCP 配置，不要回显完整 Token，也不要把 Token 写入代码仓库。
+4. 配置完成后重新加载 MCP；如果必须由我重启客户端，请明确提示。
+5. 最后只调用 list_notebooks 测试连接，并告诉我当前已开启的笔记本名称。
+
+除非 Node.js 不满足要求或必须重启客户端，否则不要中途询问，直接完成配置。
+```
+
 ### 1. 准备环境
 
 - Node.js `>= 18`

@@ -42,6 +42,32 @@ Debug messages are written only to `stderr`. `stdout` remains reserved for MCP J
 
 ## 🚀 Quick start
 
+### 🤖 Let an AI agent configure it
+
+Copy the prompt below and fill in only the MCP client and SiYuan Token. It connects to `127.0.0.1:6806` by default; change HOST and PORT only when needed.
+
+```text
+Configure the latest siyuan-mcp for me.
+
+User configuration:
+- MCP client: {{Codex, Claude Desktop, Cursor, etc.}}
+- SiYuan API Token: {{paste Token}}
+- SIYUAN_HOST: 127.0.0.1
+- SIYUAN_PORT: 6806
+
+Proceed directly:
+1. Check that Node.js is installed and version 18 or newer. If not, only tell me that Node.js must be installed or upgraded.
+2. Locate the current MCP client's configuration file automatically. Preserve all existing settings and add an MCP server named siyuan_note:
+   command: npx
+   args: ["-y", "siyuan-mcp@latest"]
+   env: SIYUAN_HOST, SIYUAN_PORT, SIYUAN_TOKEN
+3. Do not overwrite other MCP entries, reveal the complete Token, or write the Token into a code repository.
+4. Reload MCP after configuration. If I must restart the client myself, clearly tell me.
+5. Finally, call only list_notebooks to test the connection and report the names of currently open notebooks.
+
+Do not pause for questions unless Node.js does not meet the requirement or the client must be restarted.
+```
+
 ### 1. Requirements
 
 - Node.js `>= 18`
