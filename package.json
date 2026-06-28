@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "siyuan-mcp": "./dist/index.js"
+    "siyuan-mcp": "dist/index.js"
   },
   "files": [
     "dist/",
@@ -39,7 +39,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/xgq18237/siyuan_mcp_server.git"
+    "url": "git+https://github.com/xgq18237/siyuan_mcp_server.git"
   },
   "bugs": {
     "url": "https://github.com/xgq18237/siyuan_mcp_server/issues"
