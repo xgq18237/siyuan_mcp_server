@@ -1,7 +1,7 @@
 {
   "name": "siyuan-mcp",
-  "version": "1.0.4",
-  "description": "Model Context Protocol (MCP) server for SiYuan Note, providing complete SiYuan API functionality",
+  "version": "1.1.0",
+  "description": "Safe, structured Model Context Protocol server for SiYuan Note",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -16,11 +16,12 @@
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "test": "node test-docker.js",
-    "clean": "rm -rf dist",
+    "check": "tsc --noEmit",
+    "test": "npm run check && npm run build",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "rebuild": "npm run clean && npm run build",
-    "test:docker": "node test-docker.js",
-    "prepublishOnly": "npm run build",
+    "test:docker": "docker build -t siyuan-mcp-server:test .",
+    "prepublishOnly": "npm test",
     "publish:npm": "npm publish",
     "publish:docker": "docker build -t zhizhiqq/siyuan-mcp:latest . && docker push zhizhiqq/siyuan-mcp:latest",
     "publish:both": "npm run publish:npm && npm run publish:docker"
@@ -45,12 +46,12 @@
   },
   "homepage": "https://github.com/xgq18237/siyuan_mcp_server#readme",
   "devDependencies": {
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.13.2",
     "tsx": "^4.0.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.1"
+    "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "engines": {
     "node": ">=18.0.0"

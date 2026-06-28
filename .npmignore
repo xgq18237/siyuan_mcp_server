@@ -12,9 +12,7 @@ src/
 test-docker.js
 test/
 
-# 构建文件
-dist/
-!dist/index.js
+# 构建文件由 package.json files 字段显式包含
 
 # 文档
 docs/
@@ -52,4 +50,4 @@ docker-compose.yml
 node_modules/
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log* 
+yarn-error.log*

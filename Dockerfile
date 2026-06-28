@@ -1,23 +1,19 @@
-# 使用官方 Node.js 运行时作为基础镜像
-FROM node:20-alpine
+FROM node:20-alpine AS build
 
-# 设置工作目录
 WORKDIR /app
-
-# 复制依赖文件
 COPY package*.json ./
-
-# 安装依赖
-RUN npm install
-
-# 复制项目文件
-COPY . .
-
-# 构建 TypeScript
+RUN npm ci
+COPY tsconfig.json ./
+COPY src ./src
 RUN npm run build
 
-# 暴露端口（如有需要，可选）
-# EXPOSE 6806
+FROM node:20-alpine
 
-# 启动服务
-CMD ["node", "dist/index.js"] 
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build --chown=node:node /app/dist ./dist
+
+USER node
+ENTRYPOINT ["node", "dist/index.js"]
