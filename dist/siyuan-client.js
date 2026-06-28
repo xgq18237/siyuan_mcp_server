@@ -12,7 +12,7 @@ export class SiyuanApiError extends Error {
         this.name = "SiyuanApiError";
     }
 }
-const DEFAULT_TIMEOUT_MS = 20_000;
+const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
 function parseBoolean(value, fallback = false) {
     if (value === undefined)
@@ -22,12 +22,6 @@ function parseBoolean(value, fallback = false) {
 function parsePositiveInt(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
-}
-function isLoopback(hostname) {
-    const normalized = hostname.replace(/^\[|\]$/g, "").toLowerCase();
-    return normalized === "localhost"
-        || normalized === "127.0.0.1"
-        || normalized === "::1";
 }
 function normalizeBaseUrl(value) {
     return value.replace(/\/+$/, "");
@@ -71,12 +65,6 @@ export class SiyuanClient {
         this.debug = options.debug
             ?? parseBoolean(process.env.SIYUAN_MCP_DEBUG);
         this.uploadRoots = (options.uploadRoots ?? configuredUploadRoots()).map((item) => path.resolve(item));
-        const url = new URL(this.baseUrl);
-        const allowInsecure = options.allowInsecureRemote
-            ?? parseBoolean(process.env.SIYUAN_MCP_ALLOW_INSECURE_REMOTE);
-        if (url.protocol !== "https:" && !isLoopback(url.hostname) && !allowInsecure) {
-            throw new Error("拒绝通过明文 HTTP 连接远程思源。请使用 HTTPS，或显式设置 SIYUAN_MCP_ALLOW_INSECURE_REMOTE=1。");
-        }
     }
     connectionInfo() {
         const url = new URL(this.baseUrl);
@@ -257,17 +245,4 @@ export function createNodeId(now = new Date()) {
         suffix += alphabet[Math.floor(Math.random() * alphabet.length)];
     }
     return `${timestamp}-${suffix}`;
-}
-export function normalizeReadOnlySql(sql, maxRows) {
-    let normalized = sql.trim().replace(/;+\s*$/, "");
-    if (!/^(select|with)\b/i.test(normalized)) {
-        throw new Error("默认仅允许 SELECT/CTE 查询。危险 SQL 需要 SIYUAN_MCP_ALLOW_UNSAFE_SQL=1。");
-    }
-    const forbidden = /\b(insert|update|delete|drop|alter|attach|detach|pragma|vacuum|reindex|replace|create)\b/i;
-    if (forbidden.test(normalized)) {
-        throw new Error("查询包含写入或管理语句，已拒绝执行。");
-    }
-    if (!/\blimit\s+\d+/i.test(normalized))
-        normalized += ` LIMIT ${maxRows}`;
-    return normalized;
 }

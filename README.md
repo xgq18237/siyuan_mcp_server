@@ -14,11 +14,11 @@
 | --- | --- |
 | 📚 笔记本与文档 | 创建、浏览、搜索、重命名、移动和删除 |
 | 🧱 内容块 | Markdown/DOM 插入、更新、移动、折叠、引用和批量操作 |
-| 🔎 搜索 | 文档标题搜索、全文块搜索和受控 SQL 查询 |
+| 🔎 搜索 | 文档标题搜索、全文块搜索和 SQL 查询 |
 | 🗃️ 原生数据库 | 创建 AV 数据库、字段、条目、单元格和批量更新 |
 | 📎 文件与资源 | Multipart 上传、工作空间文件读写和二进制 Base64 返回 |
 | 🧩 模板与转换 | Template、Sprig、Pandoc、Markdown 和资源导出 |
-| 🛡️ 安全护栏 | 危险操作默认关闭、只读 SQL、路径白名单和响应上限 |
+| 🛡️ 可选防护 | 删除类操作保护开关、路径白名单和响应上限 |
 | 🤖 MCP 友好 | `structuredContent`、`isError`、工具安全注解和纯净 stdio |
 
 项目目前提供约 69 个面向 AI 使用场景设计的工具。它选择性封装稳定且实用的思源接口，不追求暴露全部内核私有 API。
@@ -78,7 +78,7 @@ MCP 服务器通常由 AI 客户端自动启动，不需要单独打开终端常
 
 该配置形式可用于 Cursor、Claude Desktop 以及其他支持 stdio MCP 的客户端。不同客户端的配置文件位置可能不同，但 `command`、`args` 和 `env` 内容基本一致。
 
-为兼容旧版配置，推荐继续使用 `SIYUAN_HOST`、`SIYUAN_PORT` 和 `SIYUAN_TOKEN`。只有连接 HTTPS 反向代理或带路径前缀的远程实例时，才需要使用 `SIYUAN_URL` 覆盖 HOST/PORT：
+为兼容旧版配置，推荐继续使用 `SIYUAN_HOST`、`SIYUAN_PORT` 和 `SIYUAN_TOKEN`。连接远程实例、反向代理或带路径前缀的实例时，可以使用 `SIYUAN_URL` 覆盖 HOST/PORT：
 
 ```json
 {
@@ -171,7 +171,7 @@ MCP 服务器通常由 AI 客户端自动启动，不需要单独打开终端常
 
 #### SQL 查询
 
-`sql_query` 默认仅允许 `SELECT` 或 CTE 查询，并自动补充 `LIMIT`，用于防止误写数据库或一次返回过多内容。
+`sql_query` 会将 SQL 原样交给思源 Kernel API，不限制语句类型，也不会自动补充 `LIMIT`。调用写入、删除或结构变更语句前，请自行确认影响；查询大量数据时应主动添加 `LIMIT`。
 
 示例：
 
@@ -331,31 +331,29 @@ LIMIT 20
 
 ## 🛡️ 安全设计
 
-### 危险操作默认关闭
+### 可选的危险操作保护
 
-以下操作默认会被拒绝：
+删除类操作默认可用。若希望 MCP 只允许创建、读取和普通更新，可显式开启保护：
+
+```text
+SIYUAN_MCP_PROTECT_DESTRUCTIVE=true
+```
+
+只有该参数显式为 `true` 或 `1` 时，以下操作才会被拒绝：
 
 - 删除笔记本、文档和内容块
 - 删除数据库字段或条目
 - 覆盖、移动或删除工作空间文件
 
-确认需要后启用：
+未配置、设为 `false` 或设为 `0` 时，删除类操作正常可用。
 
-```text
-SIYUAN_MCP_ALLOW_DESTRUCTIVE=1
-```
+> 升级提醒：旧变量 `SIYUAN_MCP_ALLOW_DESTRUCTIVE` 已不再参与判断。若希望继续保持“拒绝删除”的行为，请改为 `SIYUAN_MCP_PROTECT_DESTRUCTIVE=true`。
 
-### SQL 默认只读
+### SQL 直接执行
 
-```text
-SIYUAN_MCP_SQL_MAX_ROWS=200
-```
+`sql_query` 默认允许思源 Kernel API 支持的 SQL，不再区分“安全 SQL”和“危险 SQL”，也不自动添加行数限制。建议在查询语句中自行添加 `LIMIT`，并谨慎执行写入或结构变更语句。
 
-仅在充分了解风险时关闭保护：
-
-```text
-SIYUAN_MCP_ALLOW_UNSAFE_SQL=1
-```
+旧变量 `SIYUAN_MCP_ALLOW_UNSAFE_SQL` 和 `SIYUAN_MCP_SQL_MAX_ROWS` 已不再使用。
 
 ### 工作空间写入白名单
 
@@ -387,21 +385,9 @@ Linux/macOS：
 SIYUAN_MCP_UPLOAD_ROOTS=/home/me/Pictures:/home/me/Documents
 ```
 
-### 远程连接
+### 连接地址
 
-本地回环地址允许 HTTP：
-
-```text
-http://127.0.0.1:6806
-```
-
-远程实例必须使用 HTTPS。如果确实需要明文远程连接：
-
-```text
-SIYUAN_MCP_ALLOW_INSECURE_REMOTE=1
-```
-
-不建议在不可信网络中启用该选项。
+`SIYUAN_HOST` 和 `SIYUAN_URL` 均可指向本机或远程实例，HTTP 与 HTTPS 都可以使用，MCP 不额外限制协议。通过公网或不可信网络连接时，仍建议由部署者使用 HTTPS 保护 API Token 和传输内容。
 
 ---
 
@@ -413,15 +399,12 @@ SIYUAN_MCP_ALLOW_INSECURE_REMOTE=1
 | `SIYUAN_HOST` | `127.0.0.1` | 思源主机 |
 | `SIYUAN_PORT` | `6806` | 思源端口 |
 | `SIYUAN_TOKEN` | 空 | 思源 API Token |
-| `SIYUAN_MCP_ALLOW_DESTRUCTIVE` | `0` | 是否允许危险操作 |
-| `SIYUAN_MCP_ALLOW_UNSAFE_SQL` | `0` | 是否允许非只读 SQL |
-| `SIYUAN_MCP_SQL_MAX_ROWS` | `200` | SQL 默认最大行数 |
+| `SIYUAN_MCP_PROTECT_DESTRUCTIVE` | `false` | 显式设为 `true` 或 `1` 时拒绝删除类操作 |
 | `SIYUAN_MCP_WRITE_PATH_PREFIXES` | `/data/assets,/temp` | 工作空间写入白名单 |
 | `SIYUAN_MCP_UPLOAD_ROOTS` | 当前目录 | 本地上传目录白名单 |
-| `SIYUAN_MCP_TIMEOUT_MS` | `20000` | 单次 API 请求超时 |
+| `SIYUAN_MCP_TIMEOUT_MS` | `120000` | 单次 API 请求超时（2 分钟） |
 | `SIYUAN_MCP_MAX_RESPONSE_BYTES` | `10485760` | 最大响应字节数 |
 | `SIYUAN_MCP_MAX_TEXT_CHARS` | `30000` | MCP 文本预览长度 |
-| `SIYUAN_MCP_ALLOW_INSECURE_REMOTE` | `0` | 是否允许远程 HTTP |
 | `SIYUAN_MCP_DEBUG` | `0` | 向 stderr 输出端点、状态和耗时 |
 
 调试模式不会输出请求 Token 或笔记正文。
@@ -564,12 +547,12 @@ http://127.0.0.1:6806
 
 重新复制思源“设置 → 关于”中的 API Token，并重启 MCP 进程。不要在 Token 前后加入引号以外的空格。
 
-### 删除工具提示危险操作已关闭
+### 删除工具提示危险操作保护已开启
 
-这是正常的默认保护。明确需要删除能力时设置：
+当前 MCP 进程显式开启了保护。需要恢复删除能力时，移除该变量或设置：
 
 ```text
-SIYUAN_MCP_ALLOW_DESTRUCTIVE=1
+SIYUAN_MCP_PROTECT_DESTRUCTIVE=false
 ```
 
 ### 上传文件提示不在允许目录

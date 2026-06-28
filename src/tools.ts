@@ -1,5 +1,5 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { createNodeId, normalizeReadOnlySql, SiyuanApiError, SiyuanClient } from "./siyuan-client.js";
+import { createNodeId, SiyuanApiError, SiyuanClient } from "./siyuan-client.js";
 
 type Arguments = Record<string, unknown>;
 type JsonSchema = Record<string, unknown>;
@@ -87,7 +87,7 @@ export const toolDefinitions: ToolDefinition[] = [
   define("close_notebook", "关闭指定笔记本", schema({ notebook: id }, ["notebook"]), mutating),
   define("rename_notebook", "重命名笔记本", schema({ notebook: id, name: string("新名称") }, ["notebook", "name"]), mutating),
   define("create_notebook", "创建新笔记本", schema({ name: string("笔记本名称") }, ["name"]), mutating),
-  define("remove_notebook", "删除笔记本及其内容；默认受危险操作开关保护", schema({ notebook: id }, ["notebook"]), destructive),
+  define("remove_notebook", "删除笔记本及其内容；可通过保护开关禁用", schema({ notebook: id }, ["notebook"]), destructive),
   define("get_notebook_conf", "获取笔记本配置", schema({ notebook: id }, ["notebook"])),
   define("set_notebook_conf", "保存笔记本配置", schema({ notebook: id, conf: object("完整配置对象") }, ["notebook", "conf"]), mutating),
 
@@ -188,9 +188,9 @@ export const toolDefinitions: ToolDefinition[] = [
     orderBy: number("排序模式", { minimum: 0, maximum: 7, default: 0 }),
     groupBy: number("0 不分组、1 按文档分组", { enum: [0, 1], default: 0 }),
   }, ["query"])),
-  define("sql_query", "执行只读 SQL 查询；默认拒绝写入并自动添加 LIMIT", schema({
-    sql: string("SELECT 或 CTE 查询"),
-  }, ["sql"])),
+  define("sql_query", "执行 SQL 语句；调用方应自行确认写入类语句的影响", schema({
+    sql: string("SQL 语句"),
+  }, ["sql"]), destructive),
   define("flush_transaction", "等待思源事务队列落盘", schema(), mutating),
 
   define("create_database", "创建并初始化原生思源数据库，可同时创建字段", schema({
@@ -346,8 +346,8 @@ function envPositiveInt(name: string, fallback: number): number {
 }
 
 function requireDestructive(): void {
-  if (!envBoolean("SIYUAN_MCP_ALLOW_DESTRUCTIVE")) {
-    throw new Error("危险操作默认关闭。确认需要后，请设置 SIYUAN_MCP_ALLOW_DESTRUCTIVE=1。");
+  if (envBoolean("SIYUAN_MCP_PROTECT_DESTRUCTIVE")) {
+    throw new Error("危险操作保护已开启。如需执行，请移除 SIYUAN_MCP_PROTECT_DESTRUCTIVE 或将其设为 false。");
   }
 }
 
@@ -634,11 +634,9 @@ export async function invokeTool(
           groupBy: optionalNumber(args, "groupBy", 0),
         }));
       case "sql_query": {
-        const raw = requiredString(args, "sql");
-        const sql = envBoolean("SIYUAN_MCP_ALLOW_UNSAFE_SQL")
-          ? raw
-          : normalizeReadOnlySql(raw, envPositiveInt("SIYUAN_MCP_SQL_MAX_ROWS", 200));
-        return success(await client.json("/api/query/sql", { stmt: sql }));
+        return success(await client.json("/api/query/sql", {
+          stmt: requiredString(args, "sql"),
+        }));
       }
       case "flush_transaction":
         return success(await client.json("/api/sqlite/flushTransaction"));
@@ -887,8 +885,10 @@ export async function invokeTool(
         return success({
           connection: client.connectionInfo(),
           safety: {
-            destructiveOperationsEnabled: envBoolean("SIYUAN_MCP_ALLOW_DESTRUCTIVE"),
-            unsafeSqlEnabled: envBoolean("SIYUAN_MCP_ALLOW_UNSAFE_SQL"),
+            destructiveOperationsEnabled: !envBoolean("SIYUAN_MCP_PROTECT_DESTRUCTIVE"),
+            destructiveProtectionEnabled: envBoolean("SIYUAN_MCP_PROTECT_DESTRUCTIVE"),
+            sqlRestrictionsEnabled: false,
+            remoteHttpAllowed: true,
             writePathPrefixes: allowedWritePrefixes(),
           },
         });
