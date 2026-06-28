@@ -1,5 +1,7 @@
 # 🧠 SiYuan MCP Server
 
+[简体中文](./README.md) | [English](./README_EN.md)
+
 > 让 Claude、Cursor、Codex 等 AI 客户端安全地读取和操作思源笔记。
 
 `siyuan-mcp` 是一个基于 [Model Context Protocol](https://modelcontextprotocol.io/) 的思源笔记 MCP 服务器。它通过思源 Kernel API 提供笔记本、文档、内容块、全文搜索、原生数据库、资源文件和导出等能力，并针对 AI 自动化场景增加了结构化返回、安全注解与默认防护。
