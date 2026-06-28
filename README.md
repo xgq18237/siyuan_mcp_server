@@ -67,7 +67,8 @@ MCP 服务器通常由 AI 客户端自动启动，不需要单独打开终端常
       "command": "npx",
       "args": ["-y", "siyuan-mcp@latest"],
       "env": {
-        "SIYUAN_URL": "http://127.0.0.1:6806",
+        "SIYUAN_HOST": "127.0.0.1",
+        "SIYUAN_PORT": "6806",
         "SIYUAN_TOKEN": "your-api-token-here"
       }
     }
@@ -76,6 +77,17 @@ MCP 服务器通常由 AI 客户端自动启动，不需要单独打开终端常
 ```
 
 该配置形式可用于 Cursor、Claude Desktop 以及其他支持 stdio MCP 的客户端。不同客户端的配置文件位置可能不同，但 `command`、`args` 和 `env` 内容基本一致。
+
+为兼容旧版配置，推荐继续使用 `SIYUAN_HOST`、`SIYUAN_PORT` 和 `SIYUAN_TOKEN`。只有连接 HTTPS 反向代理或带路径前缀的远程实例时，才需要使用 `SIYUAN_URL` 覆盖 HOST/PORT：
+
+```json
+{
+  "env": {
+    "SIYUAN_URL": "https://siyuan.example.com",
+    "SIYUAN_TOKEN": "your-api-token-here"
+  }
+}
+```
 
 ### 4. 验证连接
 
@@ -483,7 +495,8 @@ node dist/index.js
         "C:\\path\\to\\siyuan_mcp_server\\dist\\index.js"
       ],
       "env": {
-        "SIYUAN_URL": "http://127.0.0.1:6806",
+        "SIYUAN_HOST": "127.0.0.1",
+        "SIYUAN_PORT": "6806",
         "SIYUAN_TOKEN": "your-api-token-here"
       }
     }
@@ -536,7 +549,7 @@ siyuan_mcp_server/
 依次确认：
 
 1. 思源是否正在运行。
-2. `SIYUAN_URL` 和端口是否正确。
+2. `SIYUAN_HOST`、`SIYUAN_PORT` 是否正确；使用远程反向代理时再检查 `SIYUAN_URL`。
 3. API Token 是否有效。
 4. Node.js 是否满足版本要求。
 5. 是否有普通日志写入 stdout。

@@ -8,7 +8,8 @@
       "command": "node",
       "args": ["./dist/index.js"],
       "env": {
-        "SIYUAN_URL": "http://127.0.0.1:6806",
+        "SIYUAN_HOST": "127.0.0.1",
+        "SIYUAN_PORT": "6806",
         "SIYUAN_TOKEN": "your-api-token-here",
         "SIYUAN_MCP_ALLOW_DESTRUCTIVE": "0"
       }
