@@ -6,7 +6,7 @@
 
 `siyuan-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io/) server built on the SiYuan Kernel API. It provides notebook, document, block, full-text search, Attribute View database, file, asset, template, conversion, and export capabilities with structured MCP responses and configurable safeguards.
 
-Current version: `1.1.0`
+Current version: `1.1.1`
 
 ---
 
@@ -603,8 +603,8 @@ The repository's `Publish npm` workflow supports both GitHub Releases and manual
 For automatic publishing from a GitHub Release, the release tag must match the version in `package.json`:
 
 ```text
-package.json: 1.1.0
-Release tag: v1.1.0
+package.json: 1.1.1
+Release tag: v1.1.1
 ```
 
 The workflow uses Node.js 24, installs dependencies, runs type checks and the build, and publishes npm provenance.

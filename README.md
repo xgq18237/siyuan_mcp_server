@@ -6,7 +6,7 @@
 
 `siyuan-mcp` 是一个基于 [Model Context Protocol](https://modelcontextprotocol.io/) 的思源笔记 MCP 服务器。它通过思源 Kernel API 提供笔记本、文档、内容块、全文搜索、原生数据库、资源文件和导出等能力，并针对 AI 自动化场景增加了结构化返回、安全注解与默认防护。
 
-当前版本：`1.1.0`
+当前版本：`1.1.1`
 
 ---
 
@@ -618,8 +618,8 @@ npm publish --access public
 通过 GitHub Release 自动发布时，Release 标签必须与 `package.json` 版本一致，例如：
 
 ```text
-package.json: 1.1.0
-Release tag: v1.1.0
+package.json: 1.1.1
+Release tag: v1.1.1
 ```
 
 Workflow 使用 Node.js 24，并在发布前自动执行依赖安装、类型检查和构建，同时为 npm 包生成 provenance。
