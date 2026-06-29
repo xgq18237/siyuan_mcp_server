@@ -56,16 +56,41 @@ User configuration:
 - SIYUAN_PORT: 6806
 
 Proceed directly:
-1. Check that Node.js is installed and version 18 or newer. If not, only tell me that Node.js must be installed or upgraded.
-2. Locate the current MCP client's configuration file automatically. Preserve all existing settings and add an MCP server named siyuan_note:
-   command: npx
-   args: ["-y", "siyuan-mcp@latest"]
-   env: SIYUAN_HOST, SIYUAN_PORT, SIYUAN_TOKEN
-3. Do not overwrite other MCP entries, reveal the complete Token, or write the Token into a code repository.
-4. Reload MCP after configuration. If I must restart the client myself, clearly tell me.
-5. Finally, call only list_notebooks to test the connection and report the names of currently open notebooks.
 
-Do not pause for questions unless Node.js does not meet the requirement or the client must be restarted.
+1. Check that Node.js is installed and that its version is 18 or newer.
+   - If Node.js is not installed or its version is below 18, only tell me that Node.js must be installed or upgraded, then stop.
+   - Do not try to bypass the Node.js requirement in another way.
+
+2. Automatically locate the current MCP client's configuration file. Preserve the existing configuration and only add or update the MCP entry named `siyuan_note`:
+   - command: `npx`
+   - args: `["-y", "siyuan-mcp@latest"]`
+   - env:
+     - `SIYUAN_HOST`
+     - `SIYUAN_PORT`
+     - `SIYUAN_TOKEN`
+
+3. Security requirements:
+   - Do not overwrite, delete, or reorder other MCP entries.
+   - Do not reveal the complete Token in your response.
+   - Do not write the Token to project code, repository files, temporary scripts, or logs.
+   - Write the Token only to the MCP client's user-level configuration file.
+
+4. After configuration, try to make the current MCP client reload its MCP configuration.
+   - If the client supports restarting or refreshing MCP from its settings, ask me to do that in settings, then stop and wait until I have finished before testing.
+   - If the client must be fully restarted to load the new MCP configuration, clearly tell me, "The client must be restarted," then stop.
+   - Do not write a custom MCP JSON-RPC script, temporary Node.js script, or custom client to test the connection.
+
+5. After MCP reloads successfully, test the connection only through the `siyuan_note` MCP capability already loaded by the current MCP client:
+   - Prefer calling the `list_notebooks` tool directly.
+   - If the client exposes only an equivalent notebooks resource instead of a tool, you may read that notebooks resource.
+   - Do not call other tools or read other content.
+
+6. Finally, tell me only:
+   - Whether configuration succeeded;
+   - Whether MCP must be restarted/refreshed in settings or the entire client must be restarted;
+   - The names of the currently open notebooks.
+
+Do not pause for questions unless Node.js does not meet the requirement, the configuration file cannot be found, I must restart/refresh MCP in settings, or the entire client must be restarted.
 ```
 
 ### 1. Requirements
@@ -428,13 +453,19 @@ Debug mode does not print request Tokens or note content.
 
 This project uses MCP stdio transport. The MCP client must run the container interactively in the foreground, so `-i` is required.
 
-### Build
+### Use the published image
+
+The image is published on Docker Hub as `zhizhiqq/siyuan-mcp`. Pull `latest` to receive the newest release, or use a version tag for a reproducible setup:
 
 ```bash
-docker build -t siyuan-mcp-server .
+docker pull zhizhiqq/siyuan-mcp:latest
+# Current version:
+docker pull zhizhiqq/siyuan-mcp:v1.1.1
 ```
 
 ### MCP client configuration
+
+The following configuration connects the container to a SiYuan instance running on the host:
 
 ```json
 {
@@ -445,13 +476,15 @@ docker build -t siyuan-mcp-server .
         "run",
         "--rm",
         "-i",
+        "--add-host",
+        "host.docker.internal:host-gateway",
         "-e",
         "SIYUAN_HOST=host.docker.internal",
         "-e",
         "SIYUAN_PORT=6806",
         "-e",
         "SIYUAN_TOKEN",
-        "siyuan-mcp-server"
+        "zhizhiqq/siyuan-mcp:latest"
       ],
       "env": {
         "SIYUAN_TOKEN": "your-api-token-here"
@@ -465,8 +498,36 @@ Notes:
 
 - `127.0.0.1` inside the container points to the container itself.
 - Use `host.docker.internal` to access SiYuan on the host.
+- `--add-host=host.docker.internal:host-gateway` provides the same host name on Linux; Docker Desktop already supports it.
+- Keep `-i`: MCP communicates with the container over stdin/stdout.
+- The client removes the stopped container automatically because `--rm` is enabled.
 - Do not replace the client-managed stdio process with an ordinary background Compose service.
 - `docker compose run --rm siyuan-mcp-server` is useful for manual connectivity checks.
+
+### Upload local files from Docker
+
+Containers cannot read arbitrary host files. Mount an allowed host directory as read-only and set `SIYUAN_MCP_UPLOAD_ROOTS=/uploads`. Add these entries before the image name in `args`:
+
+```json
+[
+  "--mount",
+  "type=bind,src=/absolute/path/to/files,dst=/uploads,readonly",
+  "-e",
+  "SIYUAN_MCP_UPLOAD_ROOTS=/uploads"
+]
+```
+
+Replace `/absolute/path/to/files` with an absolute host path. Only files under that mounted directory can be uploaded.
+
+### Build locally
+
+To build the image from this repository instead of using Docker Hub:
+
+```bash
+docker build -t siyuan-mcp-server .
+```
+
+Then replace `zhizhiqq/siyuan-mcp:latest` in the MCP configuration with `siyuan-mcp-server`.
 
 ---
 

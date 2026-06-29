@@ -468,13 +468,19 @@ SIYUAN_MCP_UPLOAD_ROOTS=/home/me/Pictures:/home/me/Documents
 
 本项目采用 MCP stdio 传输。容器必须由 MCP 客户端以前台交互模式启动，因此需要 `-i`。
 
-### 构建镜像
+### 使用已发布镜像
+
+Docker Hub 镜像为 `zhizhiqq/siyuan-mcp`。使用 `latest` 可获得最新版，也可以固定版本标签以确保环境可复现：
 
 ```bash
-docker build -t siyuan-mcp-server .
+docker pull zhizhiqq/siyuan-mcp:latest
+# 当前版本：
+docker pull zhizhiqq/siyuan-mcp:v1.1.1
 ```
 
 ### MCP 客户端配置
+
+下面的配置用于连接运行在宿主机上的思源：
 
 ```json
 {
@@ -485,13 +491,15 @@ docker build -t siyuan-mcp-server .
         "run",
         "--rm",
         "-i",
+        "--add-host",
+        "host.docker.internal:host-gateway",
         "-e",
         "SIYUAN_HOST=host.docker.internal",
         "-e",
         "SIYUAN_PORT=6806",
         "-e",
         "SIYUAN_TOKEN",
-        "siyuan-mcp-server"
+        "zhizhiqq/siyuan-mcp:latest"
       ],
       "env": {
         "SIYUAN_TOKEN": "your-api-token-here"
@@ -505,8 +513,36 @@ docker build -t siyuan-mcp-server .
 
 - 容器内的 `127.0.0.1` 指向容器自身。
 - 访问宿主机思源应使用 `host.docker.internal`。
+- `--add-host=host.docker.internal:host-gateway` 让 Linux 也能使用相同的宿主机地址；Docker Desktop 已原生支持该地址。
+- 必须保留 `-i`，MCP 通过容器的 stdin/stdout 通信。
+- `--rm` 会在进程停止后自动删除容器。
 - stdio MCP 不应使用普通后台 Compose 服务代替客户端进程。
 - `docker compose run --rm siyuan-mcp-server` 可用于手工连通性检查。
+
+### 在 Docker 中上传本地文件
+
+容器不能直接读取任意宿主机文件。需要将允许上传的宿主机目录以只读方式挂载到 `/uploads`，并设置 `SIYUAN_MCP_UPLOAD_ROOTS=/uploads`。在上方配置的镜像名称之前加入：
+
+```json
+[
+  "--mount",
+  "type=bind,src=/宿主机/文件绝对路径,dst=/uploads,readonly",
+  "-e",
+  "SIYUAN_MCP_UPLOAD_ROOTS=/uploads"
+]
+```
+
+请将 `/宿主机/文件绝对路径` 替换为实际绝对路径。只有该挂载目录内的文件能够上传。
+
+### 本地构建镜像
+
+如需从当前仓库自行构建，而不是使用 Docker Hub 镜像：
+
+```bash
+docker build -t siyuan-mcp-server .
+```
+
+然后将 MCP 配置中的 `zhizhiqq/siyuan-mcp:latest` 替换为 `siyuan-mcp-server`。
 
 ---
 
