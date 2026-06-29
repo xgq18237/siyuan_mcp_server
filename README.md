@@ -614,51 +614,6 @@ SIYUAN_MCP_MAX_TEXT_CHARS
 
 ---
 
-## 📤 发布
-
-发布前：
-
-```bash
-npm test
-npm audit
-npm pack --dry-run
-```
-
-发布 npm：
-
-```bash
-npm login
-npm publish --access public
-```
-
-### 使用 GitHub Actions 发布 npm
-
-仓库中的 `Publish npm` Workflow 支持发布 GitHub Release 和手动触发。
-
-1. 在 npm 创建 Granular Access Token。
-2. 为 `siyuan-mcp` 授予读写权限，并启用 `Bypass 2FA`。
-3. 在 GitHub 仓库打开 `Settings → Secrets and variables → Actions`。
-4. 新建 Repository Secret：`NPM_TOKEN`。
-5. 打开 `Actions → Publish npm → Run workflow`，选择 `latest`、`next` 或 `beta`。
-
-通过 GitHub Release 自动发布时，Release 标签必须与 `package.json` 版本一致，例如：
-
-```text
-package.json: 1.1.1
-Release tag: v1.1.1
-```
-
-Workflow 使用 Node.js 24，并在发布前自动执行依赖安装、类型检查和构建，同时为 npm 包生成 provenance。
-
-发布约束：
-
-- `src/` 是唯一源码来源。
-- `dist/` 由 `npm run build` 生成。
-- `prepublishOnly` 会自动执行检查。
-- 不要把真实 Token、工作空间路径或测试数据提交到仓库。
-
----
-
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request。新增工具时建议同时考虑：
